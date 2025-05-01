@@ -39,3 +39,11 @@ GROUP BY department;
 -- Cleanup
 DROP TABLE IF EXISTS employee;
 DROP DATABASE IF EXISTS test_db CASCADE;
+
+
+-- enables vectorized execution for all queries during the current session
+SET hive.vectorized.execution.enabled=true;
+-- enables vectorized execution during the Reduce phase of a MapReduce job.
+SET hive.vectorized.execution.reduce.enabled=true;
+-- enables vectorized execution during the Map phase of a MapReduce job.
+SET hive.vectorized.execution.map.enabled=true;
