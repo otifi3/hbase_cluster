@@ -65,4 +65,51 @@
         <value>1024</value>  
   </property>
 
+    <!-- Enable ACID support -->
+  <property>
+        <name>hive.txn.manager</name>
+        <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+  </property>
+
+  <!-- Enable ACID transactions for INSERT/UPDATE/DELETE operations -->
+  <property>
+        <name>hive.support.concurrency</name>
+        <value>true</value>
+  </property>
+
+  <!-- ACID transaction write support -->
+  <property>
+        <name>hive.enforce.bucketing</name>
+        <value>true</value>
+  </property>
+
+  <!-- Set the file format for transactional tables -->
+  <property>
+        <name>hive.transactional.table.scan</name>
+        <value>ORC</value>
+  </property>
+
+  <!-- Set to true to enable dynamic partition insert for ACID tables -->
+  <property>
+        <name>hive.txn.timeout</name>
+        <value>86400</value>
+  </property>
+
+  <!-- Enable ORC file format -->
+  <property>
+        <name>hive.default.fileformat</name>
+        <value>ORC</value>
+  </property>
+
+  <!-- Enable the use of bucketing for ACID tables -->
+  <property>
+        <name>hive.compactor.initiator.on</name>
+        <value>true</value>
+  </property>
+
+  <property>
+        <name>hive.compactor.worker.threads</name>
+        <value>1</value>
+  </property>
+
 </configuration>
