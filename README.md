@@ -71,6 +71,7 @@ This will start:
 | HDFS NameNode 2  | http://localhost:9871         |
 | HDFS NameNode 3  | http://localhost:9872         |
 | YARN RM (1–3)    | http://localhost:8088/89/90   |
+| HiveServer2      | http://localhost:10002        |
 | HiveServer2 (JDBC)| `jdbc:hive2://localhost:10000` |
 
 ---
