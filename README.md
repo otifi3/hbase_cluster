@@ -47,11 +47,11 @@ cd hive_cluster
 ### 2. Build and Launch the Cluster
 
 ```bash
-docker-compose up --build
+docker-compose up -d --build 
 cd db
-docker-compose up --build
+docker-compose up -d --build
 cd ../elt
-docker-compose up --build
+docker-compose up -d --build
 ```
 
 This will start:
