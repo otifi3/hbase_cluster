@@ -21,7 +21,7 @@ services:
       timeout: 3s
       retries: 7
       start_period: 10s 
-    restart: always
+    # restart: always
 
   m2:
     build: 
@@ -47,7 +47,7 @@ services:
       start_period: 10s 
     depends_on:
       - m1
-    restart: always       
+    # restart: always       
 
   m3:
     build: 
@@ -73,7 +73,7 @@ services:
       start_period: 10s 
     depends_on:
       - m1
-    restart: always
+    # restart: always
 
   s1:
     build: 
@@ -95,7 +95,7 @@ services:
         condition: service_healthy
       m3:
         condition: service_healthy
-    restart: always
+    # restart: always
 
   # s2:
   #   build: 
@@ -137,7 +137,7 @@ services:
       timeout: 7s
       retries: 7
       start_period: 9s 
-    restart: always
+    # restart: always
 
   h1:
     build: 
@@ -164,7 +164,7 @@ services:
       timeout: 7s
       retries: 10
       start_period: 15s
-    restart: always     
+    # restart: always     
   h2:
     build: 
       context: .
@@ -189,7 +189,7 @@ services:
       start_period: 15s
     environment:
       - HADOOP_CLASSPATH=/usr/local/tez/conf:/usr/local/tez/tez-mapreduce-0.10.3.jar
-    restart: always
+    # restart: always
 
 
 
