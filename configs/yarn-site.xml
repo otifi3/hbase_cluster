@@ -22,9 +22,8 @@
 
         <property>
             <name>yarn.resourcemanager.zk-address</name>
-            <value>m1:2181,m2:2181,m3:2181</value>
+            <value>m1:2181,m2:2181</value>
         </property>
-
 
         <property>
             <name>yarn.resourcemanager.cluster-id</name>
@@ -39,7 +38,7 @@
 
         <property>
             <name>yarn.resourcemanager.ha.rm-ids</name>
-            <value>rm1,rm2,rm3</value>
+            <value>rm1,rm2</value>
         </property>
         <property>
             <name>yarn.resourcemanager.hostname.rm1</name>
@@ -48,10 +47,6 @@
         <property>
             <name>yarn.resourcemanager.hostname.rm2</name>
             <value>m2</value>
-        </property>
-        <property>
-            <name>yarn.resourcemanager.hostname.rm3</name>
-            <value>m3</value>
         </property>
 
 
@@ -85,10 +80,6 @@
         </property>
 
         <property>
-            <name>yarn.resourcemanager.address.rm3</name>
-            <value>m3:8032</value>
-        </property>
-        <property>
             <name>yarn.resourcemanager.webapp.address.rm1</name>
             <value>m1:8088</value>
         </property>
@@ -96,11 +87,6 @@
         <property>
             <name>yarn.resourcemanager.webapp.address.rm2</name>
             <value>m2:8088</value>
-        </property>
-
-        <property>
-            <name>yarn.resourcemanager.webapp.address.rm3</name>
-            <value>m3:8088</value>
         </property>
 
         <property>
