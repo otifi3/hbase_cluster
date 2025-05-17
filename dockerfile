@@ -27,19 +27,33 @@ RUN tar -xvzf hadoop-3.3.6.tar.gz && \
 RUN mkdir -p $HADOOP_HOME/hdfs/namenode $HADOOP_HOME/hdfs/datanode $HADOOP_HOME/journal $HADOOP_HOME/logs && \
     chown -R hadoop:hadoop $HADOOP_HOME/hdfs $HADOOP_HOME/journal $HADOOP_HOME/logs
 
-# SSH setup for Hadoop user
+# Set permissions for EntryPoint script
+COPY ./entrypoint.sh /home/hadoop/
+COPY ./health_check.sh /home/hadoop/
+
+RUN chmod +x /home/hadoop/entrypoint.sh && \
+    chown hadoop:hadoop /home/hadoop/entrypoint.sh && \
+    chmod +x /home/hadoop/health_check.sh && \
+    chown hadoop:hadoop /home/hadoop/health_check.sh 
+
+
 USER hadoop
-RUN mkdir -p /home/hadoop/.ssh && \
-    ssh-keygen -t rsa -f /home/hadoop/.ssh/id_rsa -N "" && \
-    cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
+# SSH setup for Hadoop user
+RUN mkdir -p /home/hadoop/.ssh && ssh-keygen -t rsa -f /home/hadoop/.ssh/id_rsa -N "" 
+RUN cat /home/hadoop/.ssh/id_rsa.pub >> /home/hadoop/.ssh/authorized_keys
+
+USER root
+RUN chmod 700 /home/hadoop/.ssh && \
+    chmod 600 /home/hadoop/.ssh/authorized_keys && \
+    chown -R hadoop:hadoop /home/hadoop/.ssh
+
 
 ############################
 # Stage 2: ZooKeeper node
 ############################
 FROM hadoop-base AS zookeeper-node
-
-USER root
 WORKDIR /usr/local
+
 ADD https://downloads.apache.org/zookeeper/zookeeper-3.9.3/apache-zookeeper-3.9.3-bin.tar.gz ./
 RUN tar -xvzf apache-zookeeper-3.9.3-bin.tar.gz && \
     mv apache-zookeeper-3.9.3-bin /usr/local/zookeeper && \
@@ -51,50 +65,34 @@ COPY configs/zoo.cfg /usr/local/zookeeper/conf/
 
 USER hadoop
 WORKDIR /home/hadoop
-COPY ./entrypoint.sh /home/hadoop/
-RUN chmod +x entrypoint.sh
-
-EXPOSE 2181 2888 3888
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
 
 ############################
 # Stage 3: NameNode container
 ############################
 FROM hadoop-base AS namenode
-
-USER root
 COPY configs/*.xml $HADOOP_HOME/etc/hadoop/
 COPY configs/workers $HADOOP_HOME/etc/hadoop/
-COPY ./entrypoint.sh /home/hadoop/
-RUN chmod +x /home/hadoop/entrypoint.sh && chown hadoop:hadoop /home/hadoop/entrypoint.sh
 
 USER hadoop
 WORKDIR /home/hadoop
-EXPOSE 9870 8020 8485
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
 
 ############################
 # Stage 4: DataNode container
 ############################
 FROM hadoop-base AS datanode
-
-USER root
 COPY configs/*.xml $HADOOP_HOME/etc/hadoop/
 COPY configs/workers $HADOOP_HOME/etc/hadoop/
-COPY ./entrypoint.sh /home/hadoop/
-RUN chmod +x /home/hadoop/entrypoint.sh && chown hadoop:hadoop /home/hadoop/entrypoint.sh
 
 USER hadoop
 WORKDIR /home/hadoop
-EXPOSE 9864
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
 
 ############################
 # Stage 5: Hive container 
 ############################
 FROM hadoop-base AS hive
-
-USER root
 
 ENV HIVE_HOME=/usr/local/hive
 ENV TEZ_HOME=/usr/local/tez
@@ -126,8 +124,6 @@ COPY hive_configs/tez-site.xml $TEZ_HOME/conf/
 
 USER hadoop
 WORKDIR /home/hadoop
-COPY ./entrypoint.sh .
-RUN chmod +x entrypoint.sh
 
 EXPOSE 10000
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]

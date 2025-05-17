@@ -4,7 +4,7 @@ services:
       context: .
       target: zookeeper-node
     container_name: zk1
-    hostname: z1
+    hostname: zk1
     networks:
       - hnet
     volumes:
@@ -12,17 +12,17 @@ services:
       - j1:/usr/local/hadoop/journal
     healthcheck:
       test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
 
   zk2:
     build:
       context: .
       target: zookeeper-node
     container_name: zk2
-    hostname: z2
+    hostname: zk2
     networks:
       - hnet
     volumes:
@@ -30,17 +30,18 @@ services:
       - j2:/usr/local/hadoop/journal
     healthcheck:
       test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+
 
   zk3:
     build:
       context: .
       target: zookeeper-node
     container_name: zk3
-    hostname: z3
+    hostname: zk3
     networks:
       - hnet
     volumes:
@@ -48,10 +49,11 @@ services:
       - j3:/usr/local/hadoop/journal
     healthcheck:
       test: ["CMD-SHELL", "jps | grep -q QuorumPeerMain && jps | grep -q JournalNode"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      interval: 7s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
+
 
   m1:
     build:
@@ -69,15 +71,15 @@ services:
     healthcheck:
       test: ["CMD", "/home/hadoop/health_check.sh"]
       interval: 7s
-      timeout: 3s
-      retries: 7
-      start_period: 10s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
     depends_on:
-      z1:
+      zk1:
         condition: service_healthy
-      z2:
+      zk2:
         condition: service_healthy
-      z3:
+      zk3:
         condition: service_healthy
 
   m2:
@@ -96,17 +98,17 @@ services:
     healthcheck:
       test: ["CMD", "/home/hadoop/health_check.sh"]
       interval: 7s
-      timeout: 3s
-      retries: 7
-      start_period: 10s
+      timeout: 7s
+      retries: 15
+      start_period: 15s
     depends_on:
       m1:
         condition: service_healthy
-      z1:
+      zk1:
         condition: service_healthy
-      z2:
+      zk2:
         condition: service_healthy
-      z3:
+      zk3:
         condition: service_healthy
   s1:
     build:
@@ -146,8 +148,7 @@ services:
 
 networks:
   hnet:
-    driver: bridge
-
+  
 volumes:
   nn1:
   nn2:

@@ -73,9 +73,9 @@
         <value>8019</value>
     </property>
 
-        <property>
+    <property>
         <name>dfs.namenode.shared.edits.dir</name>
-        <value>qjournal://z1:8485;z2:8485;z3:8485/hadoop-cluster</value>
+        <value>qjournal://zk1:8485;zk2:8485;zk3:8485/hadoop-cluster</value>
     </property>
 
 </configuration>
