@@ -7,6 +7,8 @@ services:
     hostname: zk1
     networks:
       - hnet
+    ports:
+      - "2181:2181"
     volumes:
       - zk1:/usr/local/zookeeper
       - j1:/usr/local/hadoop/journal
@@ -25,6 +27,8 @@ services:
     hostname: zk2
     networks:
       - hnet
+    ports:
+      - "2182:2181"
     volumes:
       - zk2:/usr/local/zookeeper
       - j2:/usr/local/hadoop/journal
@@ -35,7 +39,6 @@ services:
       retries: 15
       start_period: 15s
 
-
   zk3:
     build:
       context: .
@@ -44,6 +47,8 @@ services:
     hostname: zk3
     networks:
       - hnet
+    ports:
+      - "2183:2181"
     volumes:
       - zk3:/usr/local/zookeeper
       - j3:/usr/local/hadoop/journal
@@ -54,11 +59,10 @@ services:
       retries: 15
       start_period: 15s
 
-
   m1:
     build:
       context: .
-      target: namenode
+      target: hadoop-node
     container_name: m1
     hostname: m1
     networks:
@@ -85,7 +89,7 @@ services:
   m2:
     build:
       context: .
-      target: namenode
+      target: hadoop-node
     container_name: m2
     hostname: m2
     networks:
@@ -113,11 +117,13 @@ services:
   s1:
     build:
       context: .
-      target: datanode
+      target: hbase
     container_name: s1
     hostname: s1
     networks:
       - hnet
+    ports:
+      - "16021:16020"  
     volumes:
       - dn1:/usr/local/hadoop/hdfs/datanode
       - dtmp1:/usr/local/hadoop/tmp
@@ -131,11 +137,13 @@ services:
   s2:
     build:
       context: .
-      target: datanode
+      target: hbase
     container_name: s2
     hostname: s2
     networks:
       - hnet
+    ports:
+      - "16020:16020"  
     volumes:
       - dn2:/usr/local/hadoop/hdfs/datanode
       - dtmp2:/usr/local/hadoop/tmp
@@ -146,8 +154,47 @@ services:
       m2:
         condition: service_healthy
 
+  hm1:
+    build:
+      context: .
+      target: hbase
+    container_name: hm1
+    hostname: hm1
+    networks:
+      - hnet
+    ports:
+      - "16000:16000"  
+      - "16010:16010" 
+    depends_on:
+      m1:
+        condition: service_healthy
+      m2:
+        condition: service_healthy
+    volumes:
+      - hm1_data:/usr/local/hbase/data 
+
+  hm2:
+    build:
+      context: .
+      target: hbase
+    container_name: hm2
+    hostname: hm2
+    networks:
+      - hnet
+    ports:
+      - "16001:16000" 
+      - "16011:16010"
+    depends_on:
+      m1:
+        condition: service_healthy
+      m2:
+        condition: service_healthy
+    volumes:
+      - hm2_data:/usr/local/hbase/data
+
 networks:
   hnet:
+  
   
 volumes:
   nn1:
@@ -164,3 +211,5 @@ volumes:
   dn2:
   dtmp2:
   dlogs2:
+  hm1_data:
+  hm2_data:

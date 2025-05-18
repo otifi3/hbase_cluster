@@ -12,12 +12,10 @@ if [[ -n "$MYID" ]]; then
     echo "$MYID" > /usr/local/zookeeper/myid
 fi
 
-# If the node is zk1, zk2, or zk3 — start ZK + JournalNode
 if [[ "$HOSTNAME" == zk* ]]; then
     /usr/local/zookeeper/bin/zkServer.sh start
     hdfs --daemon start journalnode
 
-# Master/Standby NameNodes (m1, m2, ...)
 elif [[ "$HOSTNAME" == m* ]]; then
 
     if [[ "$HOSTNAME" == "m1" ]]; then
@@ -38,10 +36,19 @@ elif [[ "$HOSTNAME" == m* ]]; then
         yarn --daemon start resourcemanager
     fi
 
-# DataNodes (s1, s2, ...)
+elif [[ "$HOSTNAME" == hm* ]]; then
+    if ! hdfs dfs -test -d /hbase; then
+        hdfs dfs -mkdir -p /hbase
+        hdfs dfs -chown hadoop:hadoop /hbase
+    fi
+    $HBASE_HOME/bin/hbase master start
+
 elif [[ "$HOSTNAME" == s* ]]; then
     hdfs --daemon start datanode
     yarn --daemon start nodemanager
+    $HBASE_HOME/bin/hbase-daemon.sh start regionserver
+
+
 fi
 
 # Keep container running

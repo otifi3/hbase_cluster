@@ -47,7 +47,6 @@ RUN chmod 700 /home/hadoop/.ssh && \
     chmod 600 /home/hadoop/.ssh/authorized_keys && \
     chown -R hadoop:hadoop /home/hadoop/.ssh
 
-
 ############################
 # Stage 2: ZooKeeper node
 ############################
@@ -68,9 +67,9 @@ WORKDIR /home/hadoop
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
 
 ############################
-# Stage 3: NameNode container
+# Stage 3: hadoop container
 ############################
-FROM hadoop-base AS namenode
+FROM hadoop-base AS hadoop-node
 COPY configs/*.xml $HADOOP_HOME/etc/hadoop/
 COPY configs/workers $HADOOP_HOME/etc/hadoop/
 
@@ -79,18 +78,7 @@ WORKDIR /home/hadoop
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
 
 ############################
-# Stage 4: DataNode container
-############################
-FROM hadoop-base AS datanode
-COPY configs/*.xml $HADOOP_HOME/etc/hadoop/
-COPY configs/workers $HADOOP_HOME/etc/hadoop/
-
-USER hadoop
-WORKDIR /home/hadoop
-ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
-
-############################
-# Stage 5: Hive container 
+# Stage 4: Hive container 
 ############################
 FROM hadoop-base AS hive
 
@@ -127,3 +115,36 @@ WORKDIR /home/hadoop
 
 EXPOSE 10000
 ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
+
+############################
+# Stage 5: HBase container
+############################
+FROM hadoop-node AS hbase
+
+ENV HBASE_HOME=/usr/local/hbase
+ENV PATH=$HBASE_HOME/bin:$PATH
+
+USER root
+
+# Copy the HBase binary tarball into the container
+ADD https://archive.apache.org/dist/hbase/2.4.9/hbase-2.4.9-bin.tar.gz /usr/local/
+
+RUN tar -xvzf /usr/local/hbase-2.4.9-bin.tar.gz -C /usr/local && \
+    mv /usr/local/hbase-2.4.9 /usr/local/hbase && \
+    rm /usr/local/hbase-2.4.9-bin.tar.gz && \
+    chown -R hadoop:hadoop /usr/local/hbase
+
+USER hadoop
+
+# Copy hbase-site.xml config
+COPY hbase_configs/hbase-site.xml $HBASE_HOME/conf/hbase-site.xml
+
+# Copy Hadoop common libs to HBase lib
+RUN cp $HADOOP_HOME/share/hadoop/common/lib/* $HBASE_HOME/lib/
+
+WORKDIR /home/hadoop
+
+EXPOSE 16000 16010 16020 2181
+
+ENTRYPOINT ["/home/hadoop/entrypoint.sh"]
+

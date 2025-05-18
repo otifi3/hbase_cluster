@@ -1,0 +1,223 @@
+*****
+Each RegionServer registers in ZooKeeper at /hbase/rs/<hostname>
+*****
+When the RegionServer crashes or disconnects:
+
+🧨 Its ephemeral znode automatically disappears.
+
+🧠 ZooKeeper notifies the HMaster of this disappearance.
+
+✅ The HMaster then performs failover for the RegionServer:
+
+Reassigns its regions to other healthy RegionServers.
+
+Restores data availability automatically.
+
+=====================================================================================================================
+🧠 How it works in HBase:
+When a RegionServer starts, it connects to ZooKeeper and creates an ephemeral znode under /hbase/rs/<hostname>.
+
+This znode is linked to the active session between the RegionServer and ZooKeeper.
+
+🧨 What happens during a failure?
+If the RegionServer crashes, dies, or loses network:
+
+The session between ZooKeeper and that RegionServer is lost.
+
+ZooKeeper automatically deletes its associated ephemeral znode.
+
+No manual action is needed — this is automatic and fast.
+
+✅ Why is this useful?
+This acts like a heartbeat:
+
+As long as the RegionServer is alive, the znode exists.
+
+If the znode disappears, ZooKeeper knows it's down.
+
+ZooKeeper then notifies the HMaster, which triggers:
+
+Reassigning the regions from the dead server to other active ones.
+===========================================================================================================
+ZooKeeper
+└── /hbase/rs/
+    ├── rs1.example.com  ← ephemeral znode
+    ├── rs2.example.com  ← ephemeral znode
+    └── rs3.example.com  ← ephemeral znode
+***********************
+        If rs2.example.com crashes, ZooKeeper deletes its znode → HMaster gets notified → regions reassigned.
+
+                🧪 Example:
+                Time	Event
+                T0	RegionServer rs1 registers with ZooKeeper at /hbase/rs/rs1
+                T5	RegionServer crashes
+                T6	ZooKeeper does not get heartbeat
+                T7	Session times out → znode /hbase/rs/rs1 is deleted
+                T7.1	HBase Master is notified and reassigns rs1’s regions
+
+================================================================================================================
+
+
+📦 How LSM Tree Works in HBase
+✍️ Writes:
+Fast → go to MemStore.
+
+Periodically → flushed to disk as HFiles (immutable).
+
+This avoids random writes to disk (bad for performance).
+
+🔍 Reads:
+HBase must merge:
+
+MemStore (RAM)
+
+Multiple HFiles (Disk)
+
+It uses:
+
+Bloom Filters → avoid reading unnecessary files.
+
+Block Indexes → find keys fast inside HFiles.
+
+🧹 Compaction:
+Over time, you’ll have many small HFiles.
+
+Compaction merges multiple HFiles into one:
+
+Reduces read latency.
+
+Deletes obsolete entries.
+
+               ┌────────────┐
+Client Request │ Row: u123  │
+               └────┬───────┘
+                    ↓
+      ┌────────────────────────────┐
+      │ Check Bloom Filters        │
+      └────────┬───────────────────┘
+               ↓
+   ┌──────────────────────┐
+   │ Read Block Index     │
+   └────────┬─────────────┘
+            ↓
+ ┌─────────────────────────────┐
+ │ Seek Directly to Data Block │
+ └─────────────────────────────┘
+
+
+ ###HFile Composition
++----------------+------------------------+---------------------+----------------------+-----------------------+-------------+
+|  Data Blocks   |  Optional Meta Blocks  |  File Info Block    |  Data Block Index    |  Meta Block Index     |  Trailer    |
++----------------+------------------------+---------------------+----------------------+-----------------------+-------------+
+Explanation:
+Data Blocks:
+Store the actual key-value pairs in sorted order. These are the core content.
+
+Optional Meta Blocks:
+Contain optional extra information like Bloom filters, encoding metadata, etc.
+
+File Info Block:
+Stores metadata about the file, like minimum/maximum key, timestamps, etc.
+
+Data Block Index:
+An index to quickly locate data blocks by key without scanning the whole file.
+
+Meta Block Index:
+Helps locate meta blocks efficiently.
+
+Trailer:
+Fixed-size block at the end that stores offsets to the index blocks and other structural info.
+
+***********************Remember: In HBase, HFile blocks are memory units. In HDFS, blocks are disk units.
+
+
+
+
+On the HBase Master node (hm*):
+16000 — HBase Master RPC port (for administrative commands)
+Operations:
+
+Actual data read/write operations:
+
+Put, Get, Scan, Delete on HBase tables
+
+RegionServers communicate with clients directly here for serving data requests.
+
+Who uses it:
+
+Clients connect here to read/write data.
+
+RegionServers use this port to talk to other RegionServers and the Master.
+
+===================================================================
+16010 — HBase Master Web UI (optional, for monitoring)
+Operations:
+
+Web interface for monitoring HBase Master status, metrics, and logs.
+
+Who uses it:
+
+Admins or operators use a browser to access this port for cluster monitoring.
+
+========================================================================
+2181 — ZooKeeper client port (if ZooKeeper runs here; often ZooKeeper runs on separate nodes, but if it’s colocated, expose it)
+
+On each DataNode / RegionServer node (s* or rs*):
+16020 — HBase RegionServer RPC port (for data read/write operations)
+Operations:
+
+Administrative commands like:
+
+Creating, altering, dropping tables
+
+Assigning regions to RegionServers
+
+Balancing regions
+
+Cluster-wide metadata management
+
+Who uses it:
+
+Clients send admin requests here.
+
+RegionServers report status and get commands from Master here.
+==================================================================================
+2181 — ZooKeeper client port (if ZooKeeper runs here or is accessed remotely)
+Clients connect here to discover cluster metadata and state.
+
+ZooKeeper manages coordination, leader election, configuration, and cluster membership.
+
+No actual data read/write goes through this port.
+
+
+
+What does this mean for port mapping?
+Your HBase shell (client) needs network access to:
+
+ZooKeeper nodes on port 2181
+
+HBase Master on port 16000
+
+RegionServers on port 16020
+
+Ports must be exposed and reachable from where you run the shell.
+
+If the shell runs inside your Docker network, no host port mapping is needed.
+
+If the shell runs outside Docker network, host port mapping is needed
+
+
+
+Port	Purpose	Expose from node type
+
+16000	Master RPC (admin commands)	HBase Master only
+
+16020	RegionServer RPC (data ops)	RegionServer nodes only
+
+
+
+to open hbase shell :
+    $HBASE_HOME/bin/hbase shell
+
+    
+ENV HBASE_VERSION=2.4.9
