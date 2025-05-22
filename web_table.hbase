@@ -1,0 +1,56 @@
+create 'webpages',
+    {NAME => 'content', VERSIONS => 3, TTL => 7776000},
+    {NAME => 'metadata', VERSIONS => 1}, 
+    {NAME => 'outlinks', VERSIONS => 2, TTL => 15552000},
+    {NAME => 'inlinks', VERSIONS => 2, TTL => 15552000}
+
+create 'domain_index', {NAME => 'pages', VERSIONS => 1}
+
+
+# This HBase table 'webpages' stores web page data with different column families:
+# 'content' (up to 3 versions, TTL 90 days), 'metadata' (1 version),
+# 'outlinks' and 'inlinks' (up to 2 versions, TTL 180 days).
+
+
+
+
+
+Explanation of Secondary Index and Its Benefits
+Why use the secondary index (domain_index)?
+The main webpages table uses hash-prefixed row keys, 
+which distribute data evenly for scalability and performance, 
+but break natural URL order. This makes scanning or querying by domain prefix inefficient.
+
+The secondary index table uses the domain as the row key, and stores all webpage row keys for that domain as column qualifiers.
+This allows fast retrieval of all pages under a domain without scanning the entire main table.
+
+Business Value:
+
+Enables efficient domain-based audits and queries.
+
+Improves pagination and filtering performance on domain-related data.
+
+Supports SEO analysis workflows requiring domain-centric data access.
+
+Offloads expensive full-table scans from the main table.
+
+Drawbacks of This Approach
+Complexity and Maintenance Overhead:
+The application must manage index updates manually on every insert, update, 
+or delete in the main table. This increases development complexity.
+
+Lack of Atomicity:
+HBase doesn’t support multi-table transactions, 
+so failures during updates may cause inconsistencies between main and index tables unless carefully handled.
+
+Index Row Size Limits:
+Domains with a very large number of pages may cause index rows to grow very large,
+ which can degrade performance or require sharding the index rows.
+
+Increased Write Amplification:
+Writes require additional operations on the index table,
+ increasing write latency and resource usage.
+
+Eventual Consistency Risk:
+If index updates are asynchronous or delayed,
+ queries on the index might temporarily return stale or incomplete results.

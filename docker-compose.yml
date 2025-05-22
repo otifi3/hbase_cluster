@@ -124,6 +124,7 @@ services:
       - hnet
     ports:
       - "16021:16020"  
+      - "9090:9090"
     volumes:
       - dn1:/usr/local/hadoop/hdfs/datanode
       - dtmp1:/usr/local/hadoop/tmp
@@ -144,6 +145,7 @@ services:
       - hnet
     ports:
       - "16020:16020"  
+      - "9091:9090"
     volumes:
       - dn2:/usr/local/hadoop/hdfs/datanode
       - dtmp2:/usr/local/hadoop/tmp
@@ -165,6 +167,7 @@ services:
     ports:
       - "16000:16000"  
       - "16010:16010" 
+      - "9092:9090"
     depends_on:
       m1:
         condition: service_healthy
@@ -184,6 +187,7 @@ services:
     ports:
       - "16001:16000" 
       - "16011:16010"
+      - "9093:9090"
     depends_on:
       m1:
         condition: service_healthy

@@ -219,5 +219,151 @@ Port	Purpose	Expose from node type
 to open hbase shell :
     $HBASE_HOME/bin/hbase shell
 
-    
 ENV HBASE_VERSION=2.4.9
+
+
+=================================================================================================================
+
+
+How to design the row key for your webpages table
+Data you have:
+URL (unique identifier for a webpage)
+
+Metadata (title, crawl date, etc.)
+
+Content (HTML)
+
+Outbound links
+
+Inbound links
+
+Key goals for row key design:
+Uniqueness: Each row key must uniquely identify one webpage.
+
+Efficient access: Support common queries, such as:
+
+Fetching data for a specific URL.
+
+Scanning pages by domain or crawl date (if needed).
+
+Avoid hotspotting: Distribute writes/reads evenly across region servers.
+
+Support range scans: Allow queries on ranges like domain prefixes or date ranges.
+
+Recommended Row Key Design Options
+Option 1: Use the URL directly as the row key
+Example: www.example.com
+
+Why?
+
+URL uniquely identifies a webpage.
+
+Easy to fetch data for a specific page by row key.
+
+Drawbacks:
+
+URLs often have similar prefixes → can cause hotspotting (all www. URLs go to same region).
+
+Scans by domain or date would be inefficient without additional design.
+
+Option 2: Use a hashed URL prefix + URL
+Example: HASH(www.example.com) + "|" + www.example.com
+e.g. 1a2b3c|www.example.com
+
+Why?
+
+Hashing prefixes the key with a hash (like MD5 or SHA) to distribute rows evenly across regions.
+
+Keeps uniqueness by including full URL after hash.
+
+Avoids hotspotting on popular domain prefixes.
+
+Supports:
+
+Efficient point queries by full URL (must include full key).
+
+Balanced write/read load.
+
+Option 3: Use domain + timestamp + URL
+Example: example.com|20250520|www.example.com/page1
+
+Why?
+
+Group pages by domain (allowing domain-level scans).
+
+Include crawl timestamp to order versions or support scans by date.
+
+Full URL to ensure uniqueness.
+
+Use case:
+
+Useful if you want to scan all pages from a domain within a date range.
+
+Option 4: Reverse URL + timestamp
+Example: com.example.www|20250520|page1
+
+Why?
+
+Reverse domain distributes rows better (because TLD varies more).
+
+Timestamp adds temporal ordering.
+
+Supports prefix scans by domain.
+
+Summary recommendation for your case:
+If your most common query is fetch by URL, and you want to avoid hotspotting:
+
+Use Option 2: Hashed URL prefix + URL.
+
+Example row key: "ab12cd|" + www.example.com/page1"
+
+Benefits:
+
+Even data distribution (due to hash prefix).
+
+Unique and easy to fetch by full row key.
+
+Keeps your table balanced and performant.
+
+Why this design?
+Avoids hotspotting — hash distributes data across regions.
+
+Supports fast point queries by full URL.
+
+Allows scans if you scan on full URL prefix or range keys.
+
+Simple to implement and commonly used in production HBase systems.
+
+
+
+
+==========================================================================================
+3.1
+----
+
+# Insert into webpages table
+put 'webpages', 'www.example.com/page1', 'content:html', '<html>...</html>'
+put 'webpages', 'www.example.com/page1', 'metadata:title', 'Example Page Title'
+put 'webpages', 'www.example.com/page1', 'metadata:crawl_date', '2025-05-21'
+put 'webpages', 'www.example.com/page1', 'outlinks:out_links', 'www.other.com/page2,www.other.com/page3'
+put 'webpages', 'www.example.com/page1', 'inlinks:in_links', 'www.referrer.com/pageX,www.referrer.com/pageY'
+
+# Update domain_index (add page URL as column qualifier under domain row)
+put 'domain_index', 'www.example.com', 'pages:www.example.com/page1', ''
+
+
+get 'webpages', 'www.example.com/page1'
+
+
+put 'webpages', 'www.example.com/page1', 'content:html', '<html>...updated content...</html>'
+put 'webpages', 'www.example.com/page1', 'metadata:title', 'Updated Title'
+
+
+
+here is Maintenance for the Consistency of the 2 tables
+--------------------------------------------------
+deleteall 'webpages', 'www.example.com/page1'
+
+# Also delete from domain_index to keep it consistent:
+delete 'domain_index', 'www.example.com', 'pages:www.example.com/page1'
+

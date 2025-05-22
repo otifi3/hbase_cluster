@@ -1,0 +1,53 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# IDE files
+*.iml
+.idea/
+*.swp
+*.swo
+*.bak
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# HBase data and logs
+hbase-data/
+logs/
+tmp/
+*.out
+
+# Hadoop temp and logs (if used)
+hadoop-data/
+hadoop-tmp/
+hadoop-logs/
+
+# Environment files
+.env
+
+# Python cache (if any scripts)
+__pycache__/
+*.pyc
+
+# Node modules (if any JS tools)
+node_modules/
+
+# Misc
+*.pid
+*.gz
+*.zip
+*.tar
+*.tgz
+*.7z
+
+# venv
+venv/
