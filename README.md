@@ -1,4 +1,4 @@
- # HBase Webpages Data Management System with 🐳 HBase HA Cluster Setup with Docker (HMaster + RegionServers)
+ # 🐳 HBase Webpages Data Management System with HBase HA Cluster Setup with Docker (HMaster + RegionServers)
 
 ## Overview
 
