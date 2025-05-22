@@ -230,5 +230,3 @@ Created by Ahmed Otifi
 🔗 GitHub: https://github.com/otifi3
 
 ---
-
-Let me know if you want me to add diagrams, examples, or additional sections!
